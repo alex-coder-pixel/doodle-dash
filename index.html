@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Doodle Dash</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap&subset=cyrillic">
+<style>
+:root{--bg:#eef3fa;--ink:#12203a;--mut:#5b6b86;--card:#fff;--line:#cdd8ea;--hi:#ffd23f;--hiink:#12203a;--red:#e8402f;--grid:#d9e2f2;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12203a;--ink:#f4f7fb;--mut:#9fb0cd;--card:#1b2d50;--line:#2c4170;--grid:#1f3358}}
+:root[data-theme="dark"]{--bg:#12203a;--ink:#f4f7fb;--mut:#9fb0cd;--card:#1b2d50;--line:#2c4170;--grid:#1f3358}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:400 17px/1.45 "Bricolage Grotesque",system-ui,sans-serif;
+background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+main{max-width:520px;margin:0 auto;padding:20px 18px 40px;position:relative}
+h1{font-weight:800;font-size:clamp(44px,13vw,64px);line-height:.95;margin:12px 0 6px;letter-spacing:-.02em}
+h1 span{display:inline-block;background:var(--hi);color:var(--hiink);padding:0 .15em;transform:rotate(-2deg)}
+p.lead{color:var(--mut);margin:0 0 22px;max-width:36ch}
+h2{font-size:15px;font-weight:600;color:var(--mut);margin:22px 0 8px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.chip{flex:1;min-width:64px;padding:12px 10px;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;font-weight:600;cursor:pointer;text-align:center}
+.chip small{display:block;font-weight:400;color:var(--mut);font-size:13px}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--hi);color:var(--hiink)}
+.chip[aria-pressed="true"] small{color:var(--hiink)}
+.mode{flex-basis:100%;text-align:left}
+button,input{font-family:inherit}
+button:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.lang{position:absolute;top:18px;right:18px;display:flex;gap:4px}
+.lang button{padding:6px 10px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-weight:600;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.add{display:flex;gap:8px}
+.add select,.add input{flex:1;min-width:0;padding:12px;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font-size:17px}
+.add button{padding:0 18px;border:0;border-radius:12px;background:var(--ink);color:var(--bg);font-weight:800;font-size:15px;cursor:pointer}
+.pl{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.pl button{padding:6px 12px;border:2px solid var(--line);border-radius:20px;background:var(--card);color:var(--ink);font-weight:600;cursor:pointer}
+.go{width:100%;margin-top:26px;padding:18px;border:0;border-radius:16px;background:var(--red);color:#fff;font-size:22px;font-weight:800;cursor:pointer}
+.ghost{width:100%;margin-top:10px;padding:14px;border:2px solid var(--line);border-radius:14px;background:transparent;color:var(--ink);font-size:16px;font-weight:600;cursor:pointer}
+details{margin-top:22px;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px 16px}
+summary{font-weight:600;cursor:pointer}
+details p{color:var(--mut);font-size:15px;margin:8px 0}
+details h3{margin:14px 0 2px;font-size:16px}
+.screen{display:none}.screen.on{display:block}
+#play{text-align:center;padding-top:6vh}
+.count{font-size:min(46vw,220px);font-weight:800;line-height:1;margin:5vh 0 2vh;font-variant-numeric:tabular-nums}
+.prog{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:18px 0}
+.prog i{display:block;height:100%;width:0;background:var(--red);transition:width .3s}
+.hint{color:var(--mut)}
+.role{font-weight:800;font-size:22px;margin:0}
+#overlay{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;justify-content:center;padding:24px;z-index:20;text-align:center}
+#overlay.on{display:flex}
+#overlay h2{font-size:28px;color:var(--ink)}
+#overlay .ghost,#overlay .go{max-width:420px;width:100%;margin:10px auto 0}
+.cells{display:grid;gap:8px;margin:14px 0}
+.cell{aspect-ratio:1;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font-size:22px;font-weight:800;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer}
+.cell.seen{opacity:.45}
+.cell:active,.cell.held{background:var(--hi);color:var(--hiink);border-color:var(--ink)}
+#reveal{min-height:92px;display:flex;align-items:center;justify-content:center;border:3px dashed var(--line);border-radius:16px;font-size:34px;font-weight:800;padding:8px;text-align:center}
+#reveal.show{background:var(--hi);color:var(--hiink);border:3px solid var(--ink)}
+.sc{margin:18px 0;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:6px 12px}
+.sr{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--line)}
+.sr:last-child{border:0}
+.sr b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr .pt{min-width:34px;text-align:center;font-size:24px;font-weight:800}
+.sr button{min-width:42px;height:40px;border:2px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font-weight:800;cursor:pointer}
+.sr button.plus{background:var(--hi);color:var(--hiink);border-color:var(--ink)}
+.sr.cur b::after{content:" ✏️"}
+.sheet{display:none}
+@media print{
+@page{margin:10mm}
+body{background:#fff;color:#000}body::before{display:none}
+#app,.lang{display:none}
+.sheet{display:grid;height:275mm;gap:0;border:1.5px solid #000;grid-template-columns:repeat(var(--c),1fr)}
+.sheet div{border:1px solid #000;padding:3mm;font:600 12pt "Bricolage Grotesque",sans-serif}
+}
+@media (prefers-reduced-motion:reduce){.prog i{transition:none}}
+</style>
+</head>
+<body>
+<main id="app">
+<div class="lang"><button data-l="en" aria-pressed="true">EN</button><button data-l="ru" aria-pressed="false">RU</button></div>
+
+<section id="home" class="screen on">
+<h1><span>Doodle</span><br>Dash</h1>
+<p class="lead" data-t="lead"></p>
+
+<h2 data-t="players"></h2>
+<div class="add"><input id="pname" maxlength="16" autocomplete="off" data-p="addph"><button id="padd" data-t="add"></button></div>
+<div class="pl" id="plist"></div>
+
+<h2 data-t="mode"></h2>
+<div class="row" id="modes">
+<button class="chip mode" data-v="table" aria-pressed="true"><span data-t="m1"></span><small data-t="m1s"></small></button>
+<button class="chip mode" data-v="classic" aria-pressed="false"><span data-t="m2"></span><small data-t="m2s"></small></button>
+</div>
+
+<h2 data-t="diff"></h2>
+<div class="row" id="diffOpt">
+<button class="chip" data-v="easy" aria-pressed="true"><span data-t="d1"></span><small data-t="d1s"></small></button>
+<button class="chip" data-v="mixed" aria-pressed="false"><span data-t="d2"></span><small data-t="d2s"></small></button>
+<button class="chip" data-v="hard" aria-pressed="false"><span data-t="d3"></span><small data-t="d3s"></small></button>
+</div>
+
+<h2 data-t="squares"></h2>
+<div class="row" id="cellsOpt">
+<button class="chip" data-v="12" aria-pressed="false">12</button>
+<button class="chip" data-v="16" aria-pressed="false">16</button>
+<button class="chip" data-v="20" aria-pressed="true">20</button>
+<button class="chip" data-v="25" aria-pressed="false">25</button>
+</div>
+
+<h2 data-t="secs"></h2>
+<div class="row" id="speedOpt">
+<button class="chip" data-v="3.5" aria-pressed="false">3,5<small data-t="slow"></small></button>
+<button class="chip" data-v="2.5" aria-pressed="true">2,5<small data-t="norm"></small></button>
+<button class="chip" data-v="2" aria-pressed="false">2<small data-t="fast"></small></button>
+</div>
+
+<h2 data-t="voice"></h2>
+<div class="row" id="vgOpt"><button class="chip" data-v="f" aria-pressed="true" data-t="vf"></button><button class="chip" data-v="m" aria-pressed="false" data-t="vm"></button><button class="chip" data-v="d" aria-pressed="false" data-t="vd"></button></div>
+<div class="add" style="margin-top:8px"><select id="vsel" aria-label="Voice"></select><button id="vtest" data-t="test"></button></div>
+<p class="hint" data-t="vhint" style="font-size:14px;margin:6px 0 0"></p>
+<button class="go" id="start" data-t="start"></button>
+<button class="ghost" id="print" data-t="print"></button>
+<details><summary data-t="how"></summary><div id="howbox"></div></details>
+</section>
+
+<section id="play" class="screen">
+<p class="role" id="role"></p>
+<p class="hint" id="status"></p>
+<div class="count" id="num">3</div>
+<div class="prog"><i id="bar"></i></div>
+<p class="hint" id="of"></p>
+<button class="ghost" id="pause" data-t="pause"></button>
+</section>
+
+<section id="review" class="screen">
+<h1 style="font-size:40px" data-t="decode"></h1>
+<p class="role" id="role2"></p>
+<p class="lead" data-t="decodeLead"></p>
+<div id="reveal"></div>
+<div class="cells" id="cells"></div>
+<div class="sc" id="score"></div>
+<button class="go" id="next"></button>
+<button class="ghost" id="same" data-t="same"></button>
+<button class="ghost" id="fresh" data-t="fresh"></button>
+<button class="ghost" id="menu" data-t="menu"></button>
+</section>
+
+<section id="final" class="screen">
+<h1 style="font-size:40px" data-t="over"></h1>
+<p class="role" id="winner"></p>
+<div class="sc" id="fscore"></div>
+<button class="go" id="newgame" data-t="newgame"></button>
+</section>
+</main>
+
+<div id="overlay"><h2 data-t="paused"></h2>
+<button class="go" id="resume" data-t="resume"></button>
+<button class="ghost" id="restart" data-t="restart"></button>
+<button class="ghost" id="quit" data-t="quit"></button></div>
+<div class="sheet" id="sheet"></div>
+
+<script>
+var WORDS={en:"apple,banana,pizza,burger,cheese,egg,bread,ice cream,cake,coffee,carrot,corn,donut,watermelon,pineapple,cat,dog,fish,bird,horse,cow,pig,sheep,duck,frog,snake,spider,bee,butterfly,elephant,giraffe,lion,monkey,penguin,shark,whale,turtle,rabbit,owl,octopus,dinosaur,snail,crab,house,castle,bridge,tower,tent,church,fence,window,door,ladder,stairs,lighthouse,windmill,car,bus,bicycle,train,airplane,helicopter,boat,rocket,truck,tractor,skateboard,anchor,sun,moon,star,cloud,rainbow,tree,flower,mountain,volcano,island,wave,snowman,rain,lightning,fire,leaf,cactus,mushroom,chair,table,bed,lamp,clock,key,umbrella,scissors,hammer,cup,bottle,fork,spoon,knife,candle,mirror,broom,bucket,suitcase,phone,laptop,camera,television,headphones,guitar,piano,drum,trumpet,book,pencil,envelope,balloon,gift,crown,sword,shield,flag,bomb,hat,shoe,glasses,sock,shirt,ring,necklace,backpack,tooth,eye,ear,nose,hand,foot,heart,brain,skull,ghost,robot,witch,pirate,king,clown,wizard,dragon,mermaid,vampire,alien,ninja,football,basketball,tennis racket,trophy,dice,kite,fishing rod,toilet,bathtub,pillow,magnet,compass,telescope,paint brush,trash can,traffic light,birthday cake,hot dog".split(","),
+ru:"яблоко,банан,пицца,бургер,сыр,яйцо,хлеб,мороженое,торт,кофе,морковь,кукуруза,пончик,арбуз,ананас,кошка,собака,рыба,птица,лошадь,корова,свинья,овца,утка,лягушка,змея,паук,пчела,бабочка,слон,жираф,лев,обезьяна,пингвин,акула,кит,черепаха,кролик,сова,осьминог,динозавр,улитка,краб,дом,замок,мост,башня,палатка,церковь,забор,окно,дверь,лестница,маяк,мельница,машина,автобус,велосипед,поезд,самолёт,вертолёт,лодка,ракета,грузовик,трактор,скейтборд,якорь,солнце,луна,звезда,облако,радуга,дерево,цветок,гора,вулкан,остров,волна,снеговик,дождь,молния,огонь,лист,кактус,гриб,стул,стол,кровать,лампа,часы,ключ,зонт,ножницы,молоток,чашка,бутылка,вилка,ложка,нож,свеча,зеркало,метла,ведро,чемодан,телефон,ноутбук,фотоаппарат,телевизор,наушники,гитара,пианино,барабан,труба,книга,карандаш,конверт,воздушный шар,подарок,корона,меч,щит,флаг,бомба,шляпа,ботинок,очки,носок,рубашка,кольцо,ожерелье,рюкзак,зуб,глаз,ухо,нос,рука,нога,сердце,мозг,череп,привидение,робот,ведьма,пират,король,клоун,волшебник,дракон,русалка,вампир,пришелец,ниндзя,футбол,баскетбол,ракетка,кубок,кубик,воздушный змей,удочка,туалет,ванна,подушка,магнит,компас,телескоп,кисточка,мусорное ведро,светофор,день рождения,хот-дог".split(",")};
+var HARD={en:"democracy,gravity,jealousy,silence,nostalgia,traffic jam,internet,recycling,insomnia,fashion,justice,freedom,time,idea,diet,deadline,weekend,sarcasm,password,influencer,vacation,pollution,electricity,evolution,secret,gossip,hangover,allergy,budget,jet lag,peer pressure,sunburn,echo,yoga,meditation,startup,inflation,vaccine,earthquake,tsunami,eclipse,black hole,time machine,global warming,social media,fake news,selfie,quarantine,cryptocurrency,artificial intelligence,virtual reality,gym membership,procrastination,small talk,first date,job interview,awkward silence,good luck,bad habit,beauty,courage,patience,loneliness,surprise,embarrassment,curiosity,boredom,hope,fear,love,peace,war,history,future,dream,memory,tradition,holiday,wedding,divorce,retirement,tax,salary,customs,passport,border,airport security,luggage,homesick,teamwork,leadership,photosynthesis,sleepwalking,optical illusion,magic trick,stand up comedy".split(","),
+ru:"демократия,гравитация,ревность,тишина,ностальгия,пробка,интернет,переработка отходов,бессонница,мода,справедливость,свобода,время,идея,диета,дедлайн,выходные,сарказм,пароль,блогер,отпуск,загрязнение,электричество,эволюция,секрет,сплетни,похмелье,аллергия,бюджет,смена часовых поясов,давление окружающих,солнечный ожог,эхо,йога,медитация,стартап,инфляция,вакцина,землетрясение,цунами,затмение,чёрная дыра,машина времени,глобальное потепление,соцсети,фейковые новости,селфи,карантин,криптовалюта,искусственный интеллект,виртуальная реальность,абонемент в спортзал,прокрастинация,светская беседа,первое свидание,собеседование,неловкая пауза,удача,вредная привычка,красота,смелость,терпение,одиночество,сюрприз,смущение,любопытство,скука,надежда,страх,любовь,мир,война,история,будущее,мечта,память,традиция,праздник,свадьба,развод,пенсия,налоги,зарплата,таможня,паспорт,граница,досмотр в аэропорту,багаж,тоска по дому,командная работа,лидерство,фотосинтез,лунатизм,оптическая иллюзия,фокус,стендап".split(",")};
+var T={
+en:{diff:"Difficulty",d1:"Easy",d1s:"everyday things",d2:"Mixed",d2s:"easy and hard",d3:"Hard",d3s:"ideas and concepts",voice:"Voice",vf:"Female",vm:"Male",vd:"Device voice",test:"Test",vhint:"Voices come from your device. For a nicer one, download an enhanced voice in your phone’s speech settings.",lead:"The phone shouts out words. You sketch each one before the next arrives. Then see who can read their own scribbles.",players:"Players (optional, for scoring)",addph:"Name",add:"Add",mode:"Mode",m1:"One draws",m1s:"Table Time: one artist, everyone else guesses",m2:"Everyone draws",m2s:"Classic: the host holds the phone and quizzes",squares:"Squares on the sheet",secs:"Seconds per word",slow:"relaxed",norm:"normal",fast:"frantic",start:"Start drawing",print:"Print sheets (A4)",how:"How to play",
+howHTML:"<p>Each artist needs a pen and a sheet with numbered squares. Print one above, or fold a page into a grid and number the squares row by row. No letters or digits in the drawings.</p><h3>Table Time</h3><p>One person draws while the others just listen. Afterwards the others take turns naming a square number. The artist says the word out loud. Hold that number to check. +1 to the artist if right. +1 to the person who asked if the artist was wrong.</p><h3>Classic</h3><p>The host holds the phone and does not draw. Everyone else draws. The host asks “what is number…?”, holds the number to see the word and only answers “right” or “wrong”. Three questions per player (two with 8 players). +2 for a right answer. 0 for a wrong answer or a pass. +1 to whoever slaps the table first and answers correctly, −1 if they answer wrong.</p><h3>Scoring</h3><p>Add player names. Tap +1, +2 or −1 on the scoreboard after each answer. Roles rotate each round and the game ends when everyone has been artist or host.</p>",
+ready:"Get ready",draw:"Draw!",last:"Last one done",coming:" words coming",pause:"Pause",paused:"Paused",resume:"Resume",restart:"Restart, same words",quit:"Quit to menu",decode:"Time to decode",decodeLead:"Tap and hold a number to peek at its word. Let go to hide it.",hold:"Hold a number",same:"Play again, same words",fresh:"New words",menu:"Back to menu",next:"Next round",finish:"Finish game",artist:"Artist: ",host:"Host: ",over:"Game over",win:"Winner: ",tie:"Tie: ",newgame:"New game",of:" of "},
+ru:{diff:"Сложность",d1:"Лёгкая",d1s:"предметы и животные",d2:"Смешанная",d2s:"простые и сложные",d3:"Сложная",d3s:"идеи и понятия",voice:"Голос",vf:"Женский",vm:"Мужской",vd:"Голос телефона",test:"Проверить",vhint:"Голоса берутся из устройства. Для более приятного звучания скачайте улучшенный русский голос в настройках речи телефона.",lead:"Телефон быстро диктует слова. Успейте нарисовать каждое до следующего. А потом попробуйте разобрать свои каракули.",players:"Игроки (необязательно, для счёта)",addph:"Имя",add:"Добавить",mode:"Режим",m1:"Рисует один",m1s:"Тейбл Тайм: один художник, остальные угадывают",m2:"Рисуют все",m2s:"Классика: ведущий держит телефон и спрашивает",squares:"Клеток на листе",secs:"Секунд на слово",slow:"спокойно",norm:"обычно",fast:"бешено",start:"Поехали",print:"Распечатать листы (А4)",how:"Как играть",
+howHTML:"<p>Каждому, кто рисует, нужны лист и ручка с пронумерованными клетками. Распечатайте лист выше или разделите страницу на клетки и пронумеруйте по строкам. В рисунках ни букв, ни цифр.</p><h3>Тейбл Тайм</h3><p>Рисует один, остальные слушают. Потом остальные по очереди называют номер клетки, а автор отвечает вслух. Зажмите номер, чтобы проверить слово. +1 автору, если назвал слово. +1 спросившему, если автор ошибся.</p><h3>Классика</h3><p>Ведущий держит телефон и не рисует. Остальные рисуют одновременно. Ведущий спрашивает «что под номером…?», зажимает номер и отвечает только «верно» или «неверно». Каждому 3 вопроса (при 8 игроках 2). +2 за верный ответ. 0 за ошибку или пас. +1 тому, кто первым хлопнул по столу и ответил верно, −1 если ошибся.</p><h3>Счёт</h3><p>Добавьте имена игроков. После каждого ответа нажимайте +1, +2 или −1 в таблице. Роли меняются каждый раунд, игра кончается, когда каждый побывал автором или ведущим.</p>",
+ready:"Приготовьтесь",draw:"Рисуем!",last:"Последнее слово",coming:" слов впереди",pause:"Пауза",paused:"Пауза",resume:"Продолжить",restart:"Заново, те же слова",quit:"В главное меню",decode:"Время разбирать",decodeLead:"Зажмите номер, чтобы увидеть слово. Отпустите, и оно скроется.",hold:"Зажмите номер",same:"Ещё раз, те же слова",fresh:"Новые слова",menu:"В меню",next:"Следующий раунд",finish:"Закончить игру",artist:"Художник: ",host:"Ведущий: ",over:"Игра окончена",win:"Победитель: ",tie:"Ничья: ",newgame:"Новая игра",of:" из "}};
+var $=function(s){return document.querySelector(s)};
+var S={lang:"en",mode:"table",n:20,sp:2.5,words:[],i:0,t:null,paused:false,run:0,voice:null,players:[],scores:[],round:0,vn:{},vlist:[],vg:"f",diff:"easy"};
+function tr(k){return T[S.lang][k]}
+function save(){try{localStorage.setItem("dd",JSON.stringify({lang:S.lang,players:S.players,vn:S.vn,vg:S.vg}))}catch(e){}}
+function load(){try{var d=JSON.parse(localStorage.getItem("dd")||"{}");if(d.lang)S.lang=d.lang;if(d.players)S.players=d.players;if(d.vn)S.vn=d.vn;if(d.vg)S.vg=d.vg}catch(e){}}
+function applyLang(){
+document.documentElement.lang=S.lang;
+document.querySelectorAll("[data-t]").forEach(function(e){e.textContent=tr(e.dataset.t)});
+document.querySelectorAll("[data-p]").forEach(function(e){e.placeholder=tr(e.dataset.p)});
+$("#howbox").innerHTML=tr("howHTML");
+document.querySelectorAll(".lang button").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.l===S.lang))});
+$("#reveal").textContent=tr("hold");loadVoice();drawPlayers();save()}
+document.querySelectorAll(".lang button").forEach(function(b){b.addEventListener("click",function(){S.lang=b.dataset.l;applyLang()})});
+function pick(id,key,num){document.querySelectorAll("#"+id+" .chip").forEach(function(b){b.addEventListener("click",function(){
+document.querySelectorAll("#"+id+" .chip").forEach(function(x){x.setAttribute("aria-pressed","false")});
+b.setAttribute("aria-pressed","true");S[key]=num?parseFloat(b.dataset.v):b.dataset.v})})}
+pick("modes","mode");pick("cellsOpt","n",1);pick("speedOpt","sp",1);
+function drawPlayers(){var b=$("#plist");b.innerHTML="";S.players.forEach(function(p,k){
+var x=document.createElement("button");x.textContent=p+" ×";x.setAttribute("aria-label","Remove "+p);
+x.addEventListener("click",function(){S.players.splice(k,1);drawPlayers();save()});b.appendChild(x)})}
+function addPlayer(){var v=$("#pname").value.trim();if(v&&S.players.length<12){S.players.push(v);$("#pname").value="";drawPlayers();save()}$("#pname").focus()}
+$("#padd").addEventListener("click",addPlayer);
+$("#pname").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();addPlayer()}});
+function show(id){document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("on")});$("#"+id).classList.add("on");window.scrollTo(0,0)}
+function draw(a,n){a=a.slice();var r=[];while(r.length<n&&a.length){r.push(a.splice(Math.floor(Math.random()*a.length),1)[0])}return r}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+function sample(n){var e=WORDS[S.lang],h=HARD[S.lang];if(S.diff==="easy")return draw(e,n);if(S.diff==="hard")return draw(h,n);var k=Math.floor(n/2);return shuffle(draw(h,k).concat(draw(e,n-k)))}
+function sc(x){var n=x.name,s=0;if(/natural|neural|online/i.test(n))s+=5;if(/premium|enhanced|улучш/i.test(n))s+=4;if(/milena|yuri|svetlana|dmitry|katya|irina|google|samantha|daniel/i.test(n))s+=2;if(!x.localService)s+=1;return s}
+function loadVoice(){try{var p=S.lang==="ru"?/^ru/i:/^en/i;var v=speechSynthesis.getVoices().filter(function(x){return p.test(x.lang)});v.sort(function(a,b){return sc(b)-sc(a)});S.vlist=v;var want=S.vn[S.lang];S.voice=v.find(function(x){return x.name===want})||v[0]||null;var s=$("#vsel");s.innerHTML="";v.forEach(function(x){var o=document.createElement("option");o.value=x.name;o.textContent=x.name;if(x===S.voice)o.selected=true;s.appendChild(o)})}catch(e){}}
+try{speechSynthesis.onvoiceschanged=loadVoice}catch(e){}
+var A=new Audio();
+function tts(t){try{speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang=S.lang==="ru"?"ru-RU":"en-US";if(S.voice)u.voice=S.voice;u.rate=S.sp<=2?1.25:1.1;speechSynthesis.speak(u)}catch(e){}}
+function say(t,k){
+if(S.vg==="d"){tts(t);return}
+var used=false;function fb(){if(!used){used=true;tts(t)}}
+try{speechSynthesis.cancel()}catch(e){}
+A.onerror=fb;A.src="audio/"+S.lang+"/"+S.vg+"/"+encodeURIComponent((k||t).toLowerCase().replace(/ /g,"_"))+".mp3";
+var p=A.play();if(p&&p.catch)p.catch(fb)}
+function roleText(){if(S.players.length<2)return"";return tr(S.mode==="table"?"artist":"host")+S.players[S.round]}
+function begin(fresh){
+if(fresh||S.words.length!==S.n)S.words=sample(S.n);
+S.run++;var run=S.run;S.paused=false;S.i=0;clearTimeout(S.t);
+show("play");$("#role").textContent=roleText();$("#status").textContent=tr("ready");$("#of").textContent=S.n+tr("coming");$("#bar").style.width="0";
+say(tr("ready"),"_ready");
+var c=3;$("#num").textContent=c;
+(function tick(){if(run!==S.run)return;
+if(c>1){c--;$("#num").textContent=c;S.t=setTimeout(tick,900)}else{S.t=setTimeout(function(){step(0)},900)}})();
+}
+function step(i){
+if(S.paused)return;
+if(i>=S.n){S.t=setTimeout(finish,S.sp*1000);$("#status").textContent=tr("last");return}
+S.i=i;$("#status").textContent=tr("draw");$("#num").textContent=i+1;
+$("#of").textContent=(i+1)+tr("of")+S.n;$("#bar").style.width=((i+1)/S.n*100)+"%";
+say(S.words[i]);
+S.t=setTimeout(function(){step(i+1)},S.sp*1000);
+}
+function finish(){S.run++;try{speechSynthesis.cancel()}catch(e){}
+$("#reveal").textContent=tr("hold");$("#reveal").classList.remove("show");buildCells();drawScore();
+var multi=S.players.length>1;
+$("#role2").textContent=roleText();$("#score").style.display=multi?"":"none";
+$("#next").style.display=multi?"":"none";$("#fresh").style.display=multi?"none":"";$("#same").style.display=multi?"none":"";
+$("#next").textContent=tr(S.round+1>=S.players.length?"finish":"next");
+show("review")}
+function rows(box,final){box.innerHTML="";
+var order=S.players.map(function(p,k){return k});
+if(final)order.sort(function(a,b){return S.scores[b]-S.scores[a]});
+order.forEach(function(k){var r=document.createElement("div");r.className="sr"+(!final&&k===S.round?" cur":"");
+r.innerHTML="<b></b><span class=\"pt\"></span>";r.firstChild.textContent=S.players[k];r.lastChild.textContent=S.scores[k];
+if(!final){[["−1",-1],["+1",1],["+2",2]].forEach(function(d){var b=document.createElement("button");b.textContent=d[0];if(d[1]>0)b.className="plus";
+b.setAttribute("aria-label",d[0]+" "+S.players[k]);
+b.addEventListener("click",function(){S.scores[k]+=d[1];r.querySelector(".pt").textContent=S.scores[k]});r.appendChild(b)})}
+box.appendChild(r)})}
+function drawScore(){rows($("#score"),false)}
+function buildCells(){
+var cols={12:3,16:4,20:4,25:5}[S.n],box=$("#cells");box.style.gridTemplateColumns="repeat("+cols+",1fr)";box.innerHTML="";
+S.words.forEach(function(w,k){
+var b=document.createElement("button");b.className="cell";b.textContent=k+1;b.setAttribute("aria-label","#"+(k+1));
+function down(e){e.preventDefault();b.classList.add("held","seen");$("#reveal").textContent=w;$("#reveal").classList.add("show")}
+function up(){b.classList.remove("held");$("#reveal").textContent=tr("hold");$("#reveal").classList.remove("show")}
+b.addEventListener("pointerdown",down);
+["pointerup","pointerleave","pointercancel"].forEach(function(ev){b.addEventListener(ev,up)});
+b.addEventListener("contextmenu",function(e){e.preventDefault()});
+b.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){down(e)}});
+b.addEventListener("keyup",function(e){if(e.key===" "||e.key==="Enter"){up()}});
+box.appendChild(b)})}
+function newGame(){S.scores=S.players.map(function(){return 0});S.round=0}
+$("#start").addEventListener("click",function(){newGame();begin(true)});
+$("#next").addEventListener("click",function(){
+if(S.round+1>=S.players.length){
+var m=Math.max.apply(null,S.scores),w=S.players.filter(function(p,k){return S.scores[k]===m});
+$("#winner").textContent=tr(w.length>1?"tie":"win")+w.join(", ");rows($("#fscore"),true);show("final")}
+else{S.round++;begin(true)}});
+$("#newgame").addEventListener("click",function(){S.run++;show("home")});
+$("#pause").addEventListener("click",function(){S.paused=true;clearTimeout(S.t);try{speechSynthesis.cancel()}catch(e){}$("#overlay").classList.add("on")});
+$("#resume").addEventListener("click",function(){$("#overlay").classList.remove("on");S.paused=false;
+if(S.i===0&&$("#status").textContent===tr("ready")){begin(false)}else{step(S.i+1)}});
+$("#restart").addEventListener("click",function(){$("#overlay").classList.remove("on");begin(false)});
+$("#quit").addEventListener("click",function(){S.run++;$("#overlay").classList.remove("on");show("home")});
+$("#same").addEventListener("click",function(){begin(false)});
+$("#fresh").addEventListener("click",function(){begin(true)});
+$("#menu").addEventListener("click",function(){S.run++;show("home")});
+$("#print").addEventListener("click",function(){
+var sh=$("#sheet"),cols={12:3,16:4,20:4,25:5}[S.n];sh.style.setProperty("--c",cols);
+sh.style.gridTemplateRows="repeat("+(S.n/cols)+",1fr)";sh.innerHTML="";
+for(var k=1;k<=S.n;k++){var d=document.createElement("div");d.textContent=k;sh.appendChild(d)}
+window.print()});
+$("#vsel").addEventListener("change",function(){var n=$("#vsel").value;S.vn[S.lang]=n;S.voice=S.vlist.find(function(x){return x.name===n})||S.voice;save();say(S.lang==="ru"?"Привет! Нарисуй кота":"Hello! Draw a cat","_hello")});
+$("#vtest").addEventListener("click",function(){say(S.lang==="ru"?"Привет! Нарисуй кота":"Hello! Draw a cat","_hello")});
+function showSel(){$("#vsel").style.display=S.vg==="d"?"":"none";document.querySelectorAll("#vgOpt .chip").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===S.vg))})}
+pick("vgOpt","vg");pick("diffOpt","diff");
+document.querySelectorAll("#vgOpt .chip").forEach(function(b){b.addEventListener("click",function(){showSel();save()})});
+load();applyLang();showSel();
+</script>
+</body>
+</html>
